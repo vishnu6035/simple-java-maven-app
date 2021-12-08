@@ -1,5 +1,6 @@
 pipeline{
     agent{label 'openjdk-11-maven3.8.4'}
+    triggers { upstream(upstreamProjects: 'sample,', threshold: hudson.model.Result.SUCCESS) }
     stages{
         stage('Source'){
             steps{
