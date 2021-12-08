@@ -3,6 +3,6 @@ node('openjdk-11-maven3.8.4'){
         git 'https://github.com/vishnu6035/simple-java-maven-app.git'
     }
     stage("Build"){
-        sh 'mvn clean package'
+        sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
     }
 }
