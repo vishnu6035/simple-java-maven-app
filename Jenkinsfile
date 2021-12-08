@@ -1,4 +1,5 @@
 node('openjdk-11-maven3.8.4'){
+    properties([pipelineTriggers([upstream('sample, ')])])
     stage('Source'){
         git 'https://github.com/vishnu6035/simple-java-maven-app.git'
     }
