@@ -8,7 +8,6 @@ pipeline{
         string(name: 'MAVEN-GOAL', defaultvalue: 'package', description: 'this is maven goal')
         choice(name: 'BRANCH-TO-BUILD', choices: ['master','declarative'], description: 'slect the branch' )
     }
-    }
     stages{
         stage('Source'){
             steps{
