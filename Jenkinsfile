@@ -1,15 +1,15 @@
 pipeline{
-    agent (label 'openjdk-11-maven3.8.4')
+    agent{label 'openjdk-11-maven3.8.4'}
     stages{
-        stage('git'){
+        stage('Source'){
             steps{
-                git url: 'https://github.com/vishnu6035/simple-java-maven-app.git', branch: 'declarative'
+                git 'https://github.com/vishnu6035/simple-java-maven-app.git'
             }
-        }    
+        }
         stage('Build'){
             steps{
-                sh 'mvn clean package'
+                sh '/usr/local/apache-maven-3.8.4/bin/mvn clean package'
             }
-        }    
+        }
     }
 }
