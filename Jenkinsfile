@@ -1,11 +1,20 @@
-node('jdk-11-mvn'){
-    stage('Source'){
-       git branch: 'scripted', url: 'https://github.com/vishnu6035/simple-java-maven-app.git'
-    }
-    stage("Build"){
-        sh 'mvn clean package'
-    }
-    stage('archive'){
-        archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+pipeline{
+    agent('jdk-11-mvn')
+    stages{
+        stage('source'){
+            steps{
+                    git branch: 'declarative_varma', url: 'https://github.com/vishnu6035/simple-java-maven-app.git'
+            }
+        }
+        stage('build'){
+            steps{
+                sh 'mvn clean package'
+            }
+        }
+        stage('archive'){
+            steps{
+                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+            }
+        }
     }
 }
