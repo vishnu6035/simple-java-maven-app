@@ -1,5 +1,5 @@
 pipeline{
-    agent('jdk-11-mvn')
+    agent{label'jdk-11-mvn'}
     stages{
         stage('source'){
             steps{
