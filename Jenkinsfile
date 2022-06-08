@@ -1,5 +1,5 @@
 pipeline{
-    agent{label'jdk-11-mvn'}
+    agent{label'jdk11-mvn'}
     parameters{
         choice(name: 'BRANCH_TO_BUILD', choices: ['master','declarative_varma','scripted'], description: 'select the branch' )
         choice(name: 'MAVEN_GOAL', choices: ['clean','compile','test','clean package'], description: 'select the maven goal to perform' )
@@ -7,45 +7,24 @@ pipeline{
     stages{
         stage('source'){
             steps{
-                mail from:"devops_test@jenkins.com",
-                 to:"qt@jenkins.com",
-                 subject:"Cloning of the code  ${env.JOB_NAME} started",
-                 body: "${env.BUILD_URL}"
 
                     git branch: "${params.BRANCH_TO_BUILD}", url: 'https://github.com/vishnu6035/simple-java-maven-app.git'
             }
         }
         stage('build'){
             steps{
-                mail from:"devops_test@jenkins.com",
-                 to:"qt@jenkins.com",
-                 subject:"building of the code  ${env.JOB_NAME} started",
-                 body: "${env.BUILD_URL}"
+                withSonarQubeEnv('sonar_jdk11_mvn') {
+                    sh "mvn ${params.MAVEN_GOAL}"
+                    sh "mvn sonar:sonar -Dsonar.login=b587bc27e05e3ea3b6c64357f3008b697d7f7b0d"
+                }
+                
 
-                sh "mvn ${params.MAVEN_GOAL}"
             }
         }
         stage('archive'){
             steps{
-                mail from:"devops_test@jenkins.com",
-                 to:"qt@jenkins.com",
-                 subject:"archiving the artifacts  ${env.JOB_NAME} started",
-                 body: "${env.BUILD_URL}"
-
                 archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
-        }
-    }
-    post{
-        always{
-             emailext attachLog: true,
-                body: """<p> Executed: Job <b>\'${env.JOB_NAME}:${env.BUILD_NUMBER}\'
-                </b></p><p>View console outpe at "<a href="${env.BUILD_URL}">${env.JOB_NAME}:${env.BUILD_NUMBER}
-                </a>"</p> <p><i>Build log is attached </i> </p>""",
-                compressLog: true,
-                replyTo: "do-not-reply@jenkins.com",
-                to: "qtdevops@gmail.com",
-                subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} -Status ${currentBuild.result}"
         }
     }
 }
