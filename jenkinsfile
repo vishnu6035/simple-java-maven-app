@@ -1,0 +1,70 @@
+pipeline{
+    agent{label 'jdk11-mvn'}
+    triggers{
+        cron('30 23 * * *')
+        pollSCM('*/5 * * * *')
+    }
+    tools {
+		maven 'mvn_3.8.5'
+	}
+    parameters{
+        choice(name: 'BRANCH_BUILD', choices: ['master','declarative','varma_project','scripted'], description: 'slect a branch to build the code')
+        choice(name: 'MAVEN_GOAL', choices: ['clean','compile','test','package','clean package','clean install'], description: 'slect a maven goal')
+
+    }
+    stages{
+        stage('source'){
+            steps{
+                git url:'https://github.com/vishnu6035/simple-java-maven-app.git', branch: "${params.BRANCH_BUILD}"
+            }
+        }
+        stage ('Artifactory configuration') {
+            steps {
+                rtMavenDeployer (
+                    id: "MAVEN_DEPLOYER",
+                    serverId: 'JFROG-OSS',
+                    releaseRepo: 'varma_releases',
+                    snapshotRepo: 'varma_snapshots'
+                )
+                
+            }
+        }
+        stage ('Maven Build') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'JFROG_ARTIFACTORY', usernameVariable: 'ARTIFACTORY_USERNAME', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    rtMavenRun (
+                        tool: 'mvn_3.8.5', 
+                        pom: 'pom.xml',
+                        goals: "${params.MAVEN_GOAL}",
+                        deployerId: "MAVEN_DEPLOYER"
+                        
+                    )
+                    stash includes: '**/*.jar', name: 'spcjar'
+                }
+                withSonarQubeEnv(installationName: 'sonar_scanner'){
+                            sh "mvn sonar:sonar -Dsonar.login=1866aa16aa4922a642d102c3393b65c20b487982"
+                        }
+            }
+        }
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage ('Publish build info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: 'JFROG-OSS'
+                )
+            }
+        }
+        stage ('copy to other node') {
+            agent { label 'MASTER'}
+            steps {
+                unstash 'spcjar'
+            }
+        }
+    }
+}
